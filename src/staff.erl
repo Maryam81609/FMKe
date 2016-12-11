@@ -13,7 +13,7 @@
   speciality/1,
   treatments/1,
   prescriptions/1,
-  add_prescription/6,
+  add_prescription/2,
   process_prescription/2,
   add_prescription_drugs/2
   ]).
@@ -69,21 +69,11 @@ prescriptions(Staff) ->
   antidote_lib:find_key(Staff,?STAFF_PRESCRIPTIONS,?STAFF_PRESCRIPTIONS_CRDT).
 
 %% Returns an update operation for adding a prescription to a specific staff member.
--spec add_prescription(id(), id(), id(), id(), string(), [crdt()]) -> [term()].
-add_prescription(PrescriptionId,PatientId,PharmacyId,FacilityId,DatePrescribed,Drugs) ->
-  %% nested prescription operations
-  PrescriptionIdOp = build_id_op(?PRESCRIPTION_ID,?PRESCRIPTION_ID_CRDT,PrescriptionId),
-  PatientIdOp = build_id_op(?PRESCRIPTION_PATIENT_ID,?PRESCRIPTION_PATIENT_ID_CRDT,PatientId),
-  PharmacyIdOp = build_id_op(?PRESCRIPTION_PHARMACY_ID,?PRESCRIPTION_PHARMACY_ID_CRDT,PharmacyId),
-  FacilityIdOp = build_id_op(?PRESCRIPTION_FACILITY_ID,?PRESCRIPTION_FACILITY_ID_CRDT,FacilityId),
-  DateStartedOp = build_lwwreg_op(?PRESCRIPTION_DATE_PRESCRIBED,?PRESCRIPTION_DATE_PRESCRIBED_CRDT,DatePrescribed),
-  [DrugsOp] = prescription:add_drugs(Drugs),
-  ListOps = [PrescriptionIdOp,PatientIdOp,PharmacyIdOp,FacilityIdOp,DateStartedOp,DrugsOp],
-  %% now to insert the nested operations inside the prescriptions map
-  StaffPrescriptionsKey = fmk_core:binary_prescription_key(PrescriptionId),
-  %% return a top level staff member update that contains the prescriptions map update
-  StaffPrescriptionsOp = antidote_lib:build_nested_map_op(?STAFF_PRESCRIPTIONS,?NESTED_MAP,StaffPrescriptionsKey,ListOps),
-  [StaffPrescriptionsOp].
+-spec add_prescription(binary(), binary()) -> antidote_lib:update().
+add_prescription(StaffKey, PrescriptionKey) ->
+  {antidote_lib:create_bucket(StaffKey, antidote_crdt_gmap), update, [
+    {{?STAFF_PRESCRIPTIONS, antidote_crdt_orset}, {add, PrescriptionKey}}
+  ]}.
 
 -spec process_prescription(id(), string()) -> [term()].
 process_prescription(PrescriptionId, CurrentDate) ->

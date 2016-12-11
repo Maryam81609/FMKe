@@ -49,7 +49,9 @@
 
 
 
+-export_type([update/0]).
 
+-type update() :: {{binary(), atom(), binary()}, atom(), any()}. % {bound_object(), op_name(), op_param()}
 
 
 
@@ -92,7 +94,7 @@ txn_update_object(ObjectUpdate, {Pid, TxnDetails}) ->
   ok = antidotec_pb:update_objects(Pid, [ObjectUpdate], TxnDetails).
 
 %% A wrapper for Antidote's update_objects function
--spec txn_update_objects([{bound_object(), op_name(), op_param()}], txid()) -> ok.
+-spec txn_update_objects([update()], txid()) -> ok.
 txn_update_objects(ObjectUpdates, {Pid, TxnDetails}) ->
   ok = antidotec_pb:update_objects(Pid, ObjectUpdates, TxnDetails).
 
@@ -212,8 +214,10 @@ counter_decrement(Amount) ->
   {decrement,Amount}.
 
 %% Returns an Antidote-compliant operation for assigning a value to a CRDT lww-register.
--spec lwwreg_assign(term()) -> crdt_op().
-lwwreg_assign(Value) ->
+-spec lwwreg_assign(binary()|list()) -> crdt_op().
+lwwreg_assign(Value) when is_binary(Value) ->
+  {assign, Value};
+lwwreg_assign(Value) when is_list(Value) -> % TODO remove list case
   {assign, list_to_binary(Value)}.
 
 %% Returns an Antidote-compliant operation for adding a list of items to a CRDT set.

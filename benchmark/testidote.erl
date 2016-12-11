@@ -13,6 +13,9 @@
 %% See https://github.com/erlang/rebar3/issues/1166
 %% ============================================================================
 -ifdef(TEST).
+
+-define(ANTIDOTE, 'antidote@127.0.0.1').
+
 initializer_test() ->
   net_kernel:start(['testidote@127.0.0.1',longnames]),
   erlang:set_cookie(node(),antidote).

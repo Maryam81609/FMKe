@@ -7,7 +7,6 @@
 -export ([
     id/1,
     new/7,
-    new/8,
     facility_id/1,
     patient_id/1,
     pharmacy_id/1,
@@ -26,7 +25,7 @@
 %% as well as a date when the treatment was prescribed.
 %% All Ids must be of type pos_integer() prescription date (DatePrescribed) should
 %% be supplied in binary
--spec new(id(),id(),id(),id(),id(),string(),[crdt()]) -> [term()].
+-spec new(binary(),id(),id(),id(),id(),string(),[crdt()]) -> antidote_lib:update().
 new(Id,PatientId,PrescriberId,PharmacyId,_FacilityId,DatePrescribed,Drugs) ->
   IdOp = build_id_op(?PRESCRIPTION_ID,?PRESCRIPTION_ID_CRDT,Id),
   PatientOp = build_id_op(?PRESCRIPTION_PATIENT_ID,?PRESCRIPTION_PATIENT_ID_CRDT,PatientId),
@@ -35,18 +34,9 @@ new(Id,PatientId,PrescriberId,PharmacyId,_FacilityId,DatePrescribed,Drugs) ->
   DatePrescribedOp = build_lwwreg_op(?PRESCRIPTION_DATE_PRESCRIBED,?PRESCRIPTION_DATE_PRESCRIBED_CRDT,DatePrescribed),
   IsProcessedOp = build_lwwreg_op(?PRESCRIPTION_IS_PROCESSED,?PRESCRIPTION_IS_PROCESSED_CRDT,?PRESCRIPTION_NOT_PROCESSED),
   [DrugsOp] = add_drugs(Drugs),
-  [IdOp,PatientOp,PharmacyOp,PrescriberOp,DatePrescribedOp,IsProcessedOp,DrugsOp].
-
-%% Same as new/7, but includes a date that symbolizes when the prescription was processed.
-%% Indentically to new/5, DateEnded should be binary
--spec new(id(),id(),id(),id(),id(),string(),string(),[crdt()]) -> [term()].
-new(Id,PatientId,PrescriberId,PharmacyId,FacilityId,DatePrescribed,DateProcessed,Drugs) ->
-  [IdOp,PatientOp,PharmacyOp,PrescriberOp,DatePrescribedOp,DateProcessedOp,_OldIsProcessedOp,DrugsOp] =
-    new(Id,PatientId,PrescriberId,PharmacyId,FacilityId,DatePrescribed,Drugs),
-  %% trying to keep DRY code by calling new/7 and discarding unnecessary ops
-  DateProcessedOp = build_lwwreg_op(?PRESCRIPTION_DATE_PRESCRIBED,?PRESCRIPTION_DATE_PRESCRIBED_CRDT,DateProcessed),
-  IsProcessedOp = build_lwwreg_op(?PRESCRIPTION_IS_PROCESSED,?PRESCRIPTION_IS_PROCESSED_CRDT,?PRESCRIPTION_PROCESSED),
-  [IdOp,PatientOp,PharmacyOp,PrescriberOp,DatePrescribedOp,DateProcessedOp,IsProcessedOp,DrugsOp].
+  {antidote_lib:create_bucket(Id, antidote_crdt_gmap), update, [
+    IdOp,PatientOp,PharmacyOp,PrescriberOp,DatePrescribedOp,IsProcessedOp,DrugsOp
+  ]}.
 
 %% Returns the facility ID from an already existant prescription object.
 -spec facility_id(crdt()) -> id().
@@ -95,7 +85,7 @@ drugs(Prescription) ->
   antidote_lib:find_key(Prescription,?PRESCRIPTION_DRUGS,?PRESCRIPTION_DRUGS_CRDT).
 
 %% Returns the prescription state (if it is processed) from an already existant prescription object.
--spec is_processed(crdt()) -> binary().
+-spec is_processed(crdt()) -> string().
 is_processed(Prescription) ->
   IsProcessed = antidote_lib:find_key(Prescription,?PRESCRIPTION_IS_PROCESSED,?PRESCRIPTION_IS_PROCESSED_CRDT),
   case IsProcessed of
@@ -126,8 +116,10 @@ remove_drugs(Drugs) ->
 %%-----------------------------------------------------------------------------
 %% Internal auxiliary functions - simplifying calls to external modules
 %%-----------------------------------------------------------------------------
+build_id_op(Key,KeyType,Id) when is_integer(Id) -> % TODO remove this case
+  build_lwwreg_op(Key,KeyType, integer_to_binary(Id));
 build_id_op(Key,KeyType,Id) ->
-  build_lwwreg_op(Key,KeyType,integer_to_list(Id)).
+  build_lwwreg_op(Key,KeyType, Id).
 
 build_lwwreg_op(Key,KeyType,Value) ->
   antidote_lib:build_map_op(Key,KeyType,antidote_lib:lwwreg_assign(Value)).

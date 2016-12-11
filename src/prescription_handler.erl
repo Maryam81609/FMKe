@@ -50,7 +50,7 @@ create_prescription(Req) ->
 						cowboy_req:reply(400, #{}, ?ERR_INVALID_PRESCRIPTION_ID, Req);
 				false ->
 						ListDrugs = parse_line(CsvDrugs),
-						ServerResponse = fmk_core:create_prescription(PrescriptionId,PatientId,PrescriberId,PharmacyId,FacilityId,DatePrescribed,ListDrugs),
+						ServerResponse = fmk_core:create_prescription(PrescriptionId,PatientId,PrescriberId,PharmacyId,FacilityId,none,DatePrescribed,ListDrugs),
 						Success = ServerResponse =:= ok,
 						Result = case ServerResponse of
 								ok -> ServerResponse;

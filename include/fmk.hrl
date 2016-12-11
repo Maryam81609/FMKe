@@ -1,7 +1,7 @@
 %%-define(ANTIDOTE, 'antidote@127.0.0.1').
--define(DEFAULT_ANTIDOTE_PORT, 8087).
+-define(DEFAULT_ANTIDOTE_PORT, "8087").
 -define(DEFAULT_ANTIDOTE_ADDRESS, "127.0.0.1").
--define (DEFAULT_FMKE_HTTP_PORT, 9090).
+-define (DEFAULT_FMKE_HTTP_PORT, "9090").
 -define (APP, fmke).
 -define (VAR_ANTIDOTE_PB_PID, antidote_pb_pid).
 -define (VAR_ANTIDOTE_PB_ADDRESS, antidote_pb_address).
@@ -140,7 +140,7 @@
 -type op_param() :: antidote:op_param().
 -type crdt() :: term().
 -type crdt_op() :: any().
--type field() :: term().
+-type field() :: binary().
 -type map_field_op() ::  {remove, field()}.
 -type map_field_update() :: {update, field(), crdt_op()}.
 -type map_op() :: {update, {[map_field_update() | map_field_op()], actorordot()}}.

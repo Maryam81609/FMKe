@@ -17,7 +17,7 @@
     patient_id/1,
     events/1,
     prescriptions/1,
-    add_prescription/7,
+    add_prescription/2,
     add_event/4
 	]).
 
@@ -117,21 +117,11 @@ finish(CurrentDate) ->
 %% Some IDs are necessary in order to create a prescription which should be self-explanatory.
 %% Drugs is supposed to be passed as a simple erlang list containing binary elements, that will in
 %% turn be converted into a riak_dt_orset.
--spec add_prescription(id(), id(), id(), id(), id(), string(), [crdt()]) -> [term()].
-add_prescription(PrescriptionId,PatientId,PrescriberId,PharmacyId,FacilityId,DatePrescribed,Drugs) ->
-  PrescriptionIdOp = build_id_op(?PRESCRIPTION_ID,?PRESCRIPTION_ID_CRDT,PrescriptionId),
-  PatientIdOp = build_id_op(?PRESCRIPTION_PATIENT_ID,?PRESCRIPTION_PATIENT_ID_CRDT,PatientId),
-  PrescriberIdOp = build_id_op(?PRESCRIPTION_PRESCRIBER_ID,?PRESCRIPTION_PRESCRIBER_ID_CRDT,PrescriberId),
-  PharmacyIdOp = build_id_op(?PRESCRIPTION_PHARMACY_ID,?PRESCRIPTION_PHARMACY_ID_CRDT,PharmacyId),
-  FacilityIdOp = build_id_op(?PRESCRIPTION_FACILITY_ID,?PRESCRIPTION_FACILITY_ID_CRDT,FacilityId),
-  DateStartedOp = build_lwwreg_op(?PRESCRIPTION_DATE_PRESCRIBED,?PRESCRIPTION_DATE_PRESCRIBED_CRDT,DatePrescribed),
-  [DrugsOp] = prescription:add_drugs(Drugs),
-  ListOps = [PrescriptionIdOp,PatientIdOp,PrescriberIdOp,PharmacyIdOp,FacilityIdOp,DateStartedOp,DrugsOp],
-  %% the nested prescription will be indexed by its key.
-  PatientPrescriptionsKey = fmk_core:binary_prescription_key(PrescriptionId),
-  %% return a list of operations for the top level treatment map that includes all
-  %% of the nested operations for the prescription fields.
-  [antidote_lib:build_nested_map_op(?TREATMENT_PRESCRIPTIONS,?NESTED_MAP,PatientPrescriptionsKey,ListOps)].
+-spec add_prescription(binary(), id()) -> antidote_lib:update().
+add_prescription(TreatmentId, PrescriptionId) ->
+  {antidote_lib:create_bucket(TreatmentId, antidote_crdt_gmap), update, [
+    {{?TREATMENT_PRESCRIPTIONS, antidote_crdt_orset}, {add, fmk_core:binary_prescription_key(PrescriptionId)}}
+  ]}.
 
 %% Returns a list of antidote operation to add a nested event to a treatment.
 %% Some IDs are necessary in order to create a prescription which should be self-explanatory.

@@ -16,7 +16,7 @@
   events/1,
   add_treatment/4,
   add_treatment/5,
-  add_prescription/6,
+  add_prescription/2,
   add_event/5,
   process_prescription/2,
   add_prescription_drugs/2
@@ -101,21 +101,11 @@ add_treatment(TreatmentId, PrescriberId, FacilityId, DateStarted, DateEnded) ->
   [PatientTreatmentsOp].
 
 %% Returns an update operation for adding a prescription to a specific patient.
--spec add_prescription(id(), id(), id(), id(), string(), [crdt()]) -> [term()].
-add_prescription(PrescriptionId,PrescriberId,PharmacyId,FacilityId,DatePrescribed,Drugs) ->
-  %% nested prescription operations
-  PrescriptionIdOp = build_id_op(?PRESCRIPTION_ID,?PRESCRIPTION_ID_CRDT,PrescriptionId),
-  PrescriberIdOp = build_id_op(?PRESCRIPTION_PRESCRIBER_ID,?PRESCRIPTION_PRESCRIBER_ID_CRDT,PrescriberId),
-  PharmacyIdOp = build_id_op(?PRESCRIPTION_PHARMACY_ID,?PRESCRIPTION_PHARMACY_ID_CRDT,PharmacyId),
-  FacilityIdOp = build_id_op(?PRESCRIPTION_FACILITY_ID,?PRESCRIPTION_FACILITY_ID_CRDT,FacilityId),
-  DateStartedOp = build_lwwreg_op(?PRESCRIPTION_DATE_PRESCRIBED,?PRESCRIPTION_DATE_PRESCRIBED_CRDT,DatePrescribed),
-  [DrugsOp] = prescription:add_drugs(Drugs),
-  ListOps = [PrescriptionIdOp,PrescriberIdOp,PharmacyIdOp,FacilityIdOp,DateStartedOp,DrugsOp],
-  %% now to insert the nested operations inside the prescriptions map
-  PatientPrescriptionsKey = fmk_core:binary_prescription_key(PrescriptionId),
-  %% return a top level patient update that contains the prescriptions map update
-  PatientPrescriptionsOp = antidote_lib:build_nested_map_op(?PATIENT_PRESCRIPTIONS,?NESTED_MAP,PatientPrescriptionsKey,ListOps),
-  [PatientPrescriptionsOp].
+-spec add_prescription(binary(), binary()) -> antidote_lib:update().
+add_prescription(PatientKey, PatientPrescriptionsKey) ->
+  {antidote_lib:create_bucket(PatientKey, antidote_crdt_gmap), update, [
+    {{?PATIENT_PRESCRIPTIONS, antidote_crdt_orset}, {add, PatientPrescriptionsKey}}
+  ]}.
 
 -spec process_prescription(id(), string()) -> [term()].
 process_prescription(PrescriptionId, CurrentDate) ->
