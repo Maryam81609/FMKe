@@ -67,7 +67,7 @@ sleep 2
 
 # Fill database with testdata:
 echo "Filling Antidote with testdata"
-./test/fmk_setup_script.erl 1 'fmk@127.0.0.1' || true
+./benchmark/fmk_setup_script.erl 1 'fmk@127.0.0.1' || true
 
 # Start benchmark
 echo "Starting Benchmark"

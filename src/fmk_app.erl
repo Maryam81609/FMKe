@@ -30,6 +30,7 @@ start(_StartType, _StartArgs) ->
         {"/prescriptions/[:id]", prescription_handler, []},
         {"/patients/[:id]", patient_handler, []},
         {"/pharmacies/[:id]", pharmacy_handler, []},
+        {"/pharmacies/[:id]/prescriptions", pharmacy_handler, prescriptions},
         {"/facilities/[:id]", facility_handler, []},
         {"/treatments/[:id]", treatment_handler, []},
         {"/events/[:id]", event_handler, []},

@@ -71,9 +71,10 @@ prescriptions(Staff) ->
 %% Returns an update operation for adding a prescription to a specific staff member.
 -spec add_prescription(binary(), binary()) -> antidote_lib:update().
 add_prescription(StaffKey, PrescriptionKey) ->
-  {antidote_lib:create_bucket(StaffKey, antidote_crdt_gmap), update, [
-    {{?STAFF_PRESCRIPTIONS, antidote_crdt_orset}, {add, PrescriptionKey}}
-  ]}.
+  {antidote_lib:create_bucket(prescriptions_key(StaffKey), antidote_crdt_orset), add, PrescriptionKey}.
+
+prescriptions_key(StaffKey) ->
+  <<StaffKey/binary, "_prescriptions">>.
 
 -spec process_prescription(id(), string()) -> [term()].
 process_prescription(PrescriptionId, CurrentDate) ->

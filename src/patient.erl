@@ -103,9 +103,10 @@ add_treatment(TreatmentId, PrescriberId, FacilityId, DateStarted, DateEnded) ->
 %% Returns an update operation for adding a prescription to a specific patient.
 -spec add_prescription(binary(), binary()) -> antidote_lib:update().
 add_prescription(PatientKey, PatientPrescriptionsKey) ->
-  {antidote_lib:create_bucket(PatientKey, antidote_crdt_gmap), update, [
-    {{?PATIENT_PRESCRIPTIONS, antidote_crdt_orset}, {add, PatientPrescriptionsKey}}
-  ]}.
+  {antidote_lib:create_bucket(prescriptions_key(PatientKey), antidote_crdt_orset), add, PatientPrescriptionsKey}.
+
+prescriptions_key(PatientKey) ->
+  <<PatientKey/binary, "_prescriptions">>.
 
 -spec process_prescription(id(), string()) -> [term()].
 process_prescription(PrescriptionId, CurrentDate) ->
