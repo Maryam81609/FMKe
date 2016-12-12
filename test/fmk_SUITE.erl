@@ -14,12 +14,14 @@
 %% tests
 -export([
   test_create_prescription/1,
-  test_get_pharmacy_prescription/1
+  test_get_pharmacy_prescription/1,
+  test_get_staff_prescriptions/1
 ]).
 
 all() -> [
   test_create_prescription,
-  test_get_pharmacy_prescription
+  test_get_pharmacy_prescription,
+  test_get_staff_prescriptions
 ].
 
 init_per_suite(Config) ->
@@ -90,7 +92,7 @@ test_get_pharmacy_prescription(Conf) ->
     {<<"prescriptionPharmacyId">>,BaseIdBin},
     {<<"prescriptionPrescriberId">>,BaseIdBin},
     {<<"prescriptionDrugs">>,[<<"aspirin">>,<<"paracetamol">>]},
-    {<<"prescriptionIsProcessed">>,"prescription_not_processed"},
+    {<<"prescriptionIsProcessed">>,<<"prescription_not_processed">>},
     {<<"prescriptionDatePrescribed">>,<<"today">>},
     {<<"prescriptionDateProcessed">>,<<"not_found">>}]]
   ,
@@ -98,6 +100,44 @@ test_get_pharmacy_prescription(Conf) ->
 
   ok.
 
+test_get_staff_prescriptions(Conf) ->
+  BaseId = integer_to_list(proplists:get_value(baseid, Conf)),
+    Response = get_request("staff/" ++ BaseId ++ "/prescriptions"),
+    ct:pal("Response = ~p", [Response]),
+    BaseIdBin = list_to_binary(BaseId),
+    Expected = [[{<<"prescriptionId">>,<<"prescription_",BaseIdBin/binary>>},
+      {<<"prescriptionFacilityId">>,BaseIdBin},
+      {<<"prescriptionPatientId">>,BaseIdBin},
+      {<<"prescriptionPharmacyId">>,BaseIdBin},
+      {<<"prescriptionPrescriberId">>,BaseIdBin},
+      {<<"prescriptionDrugs">>,[<<"aspirin">>,<<"paracetamol">>]},
+      {<<"prescriptionIsProcessed">>,<<"prescription_not_processed">>},
+      {<<"prescriptionDatePrescribed">>,<<"today">>},
+      {<<"prescriptionDateProcessed">>,<<"not_found">>}]]
+    ,
+    ?assertEqual(Expected, Response),
+
+    ok.
+
+
+test_get_processed_pharmacy_prescriptions(Conf) ->
+  BaseId = integer_to_list(proplists:get_value(baseid, Conf)),
+  Response = get_request("pharmacies/" ++ BaseId ++ "/processed_prescriptions"),
+  ct:pal("Response = ~p", [Response]),
+  BaseIdBin = list_to_binary(BaseId),
+  Expected = [[{<<"prescriptionId">>,<<"prescription_",BaseIdBin/binary>>},
+    {<<"prescriptionFacilityId">>,BaseIdBin},
+    {<<"prescriptionPatientId">>,BaseIdBin},
+    {<<"prescriptionPharmacyId">>,BaseIdBin},
+    {<<"prescriptionPrescriberId">>,BaseIdBin},
+    {<<"prescriptionDrugs">>,[<<"aspirin">>,<<"paracetamol">>]},
+    {<<"prescriptionIsProcessed">>,<<"prescription_not_processed">>},
+    {<<"prescriptionDatePrescribed">>,<<"today">>},
+    {<<"prescriptionDateProcessed">>,<<"not_found">>}]]
+  ,
+  ?assertEqual(Expected, Response),
+
+  ok.
 
 
 test_get_patient(_Conf) ->

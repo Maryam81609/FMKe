@@ -84,9 +84,9 @@ get_pharmacy_prescriptions(Req) ->
       ServerResponse = fmk_core:get_pharmacy_prescriptions(IntegerId),
       JsonReply = jsx:encode([{success, true}, {result, ServerResponse}]),
       cowboy_req:reply(200, #{
-  <<"content-type">> => <<"application/json">>
-}, JsonReply, Req)
-end .
+        <<"content-type">> => <<"application/json">>
+      }, JsonReply, Req)
+  end.
 
 
 get_pharmacy(Req) ->

@@ -60,8 +60,8 @@
 -define (PRESCRIPTION_DATE_PROCESSED_CRDT, antidote_crdt_lwwreg).
 -define (PRESCRIPTION_DRUGS, <<"prescription_drugs">>).
 -define (PRESCRIPTION_DRUGS_CRDT, antidote_crdt_orset).
--define (PRESCRIPTION_NOT_PROCESSED, "prescription_not_processed").
--define (PRESCRIPTION_PROCESSED, "prescription_processed").
+-define (PRESCRIPTION_NOT_PROCESSED, <<"prescription_not_processed">>).
+-define (PRESCRIPTION_PROCESSED, <<"prescription_processed">>).
 
 %% Treatment macros
 -define (TREATMENT_ID, <<"treatment_id">>).

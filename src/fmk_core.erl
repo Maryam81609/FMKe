@@ -175,12 +175,14 @@ get_pharmacy_prescriptions(PharmacyId) ->
 
 -spec get_processed_pharmacy_prescriptions(id()) -> [crdt()] | {error, reason()}.
 get_processed_pharmacy_prescriptions(PharmacyId) ->
-  case get_pharmacy_by_id(PharmacyId) of
-    {error, not_found} -> {error, no_such_pharmacy};
-    Pharmacy ->
-      PharmacyPrescriptions = pharmacy:prescriptions(Pharmacy),
-      filter_processed_prescriptions(PharmacyPrescriptions)
-  end.
+  PharmacyKey = binary_pharmacy_key(PharmacyId),
+  TxId = antidote_lib:txn_start(),
+  {set, PrescriptionIds} = antidote_lib:txn_read_object(pharmacy:prescriptions_processed_key(PharmacyKey), TxId),
+  PrescriptionObjects = [prescription:key(Id) || Id <- PrescriptionIds],
+  Result = antidote_lib:txn_read_objects(PrescriptionObjects, TxId),
+  antidote_lib:txn_commit(TxId),
+  Result2 = [crdt_json_encoder:encode_object(prescription, P) || {map, P} <- Result],
+  Result2.
 
 %% Fetches a prescription by ID.
 -spec get_prescription_by_id(id()) -> [crdt()] | {error, reason()}.
@@ -216,10 +218,14 @@ get_staff_by_id(Id, Txn) ->
 %% Fetches a list of prescriptions given a certain staff member ID.
 -spec get_staff_prescriptions(id()) -> [crdt()] | {error, reason()}.
 get_staff_prescriptions(StaffId) ->
-  case get_staff_by_id(StaffId) of
-    {error, not_found} -> {error, no_such_facility};
-    Staff -> staff:prescriptions(Staff)
-  end.
+  StaffKey = binary_staff_key(StaffId),
+  TxId = antidote_lib:txn_start(),
+  {set, PrescriptionIds} = antidote_lib:txn_read_object(staff:prescriptions_key(StaffKey), TxId),
+  PrescriptionObjects = [prescription:key(Id) || Id <- PrescriptionIds],
+  Result = antidote_lib:txn_read_objects(PrescriptionObjects, TxId),
+  antidote_lib:txn_commit(TxId),
+  Result2 = [crdt_json_encoder:encode_object(prescription, P) || {map, P} <- Result],
+  Result2.
 
 %% Fetches a list of treatments given a certain staff member ID.
 -spec get_staff_treatments(id()) -> [crdt()] | {error, reason()}.
@@ -309,28 +315,11 @@ update_prescription_medication(Id, add_drugs, Drugs) ->
   Result = case get_prescription_by_id(Id, Txn) of
              {error, not_found} ->
                {error, no_such_prescription};
-             Prescription ->
+             _Prescription ->
                UpdateOperation = prescription:add_drugs(Drugs),
-               PatientId = prescription:patient_id(Prescription),
-               PharmacyId = prescription:pharmacy_id(Prescription),
-               PrescriberId = prescription:prescriber_id(Prescription),
-               %% gather required antidote keys
                PrescriptionKey = binary_prescription_key(Id),
-               PatientKey = binary_patient_key(PatientId),
-               PharmacyKey = binary_pharmacy_key(PharmacyId),
-               PrescriberKey = binary_staff_key(PrescriberId),
-               %% build nested updates for patients, pharmacies, facilities and the prescriber
-               PatientUpdate = patient:add_prescription_drugs(Id, Drugs),
-               PharmacyUpdate = pharmacy:add_prescription_drugs(Id, Drugs),
-               PrescriberUpdate = staff:add_prescription_drugs(Id, Drugs),
                %% update top level prescription
                antidote_lib:put(PrescriptionKey, ?MAP, update, UpdateOperation, Txn),
-               %% add to patient prescriptions
-               antidote_lib:put(PatientKey, ?MAP, update, PatientUpdate, Txn),
-               %% add to pharmacy prescriptions
-               antidote_lib:put(PharmacyKey, ?MAP, update, PharmacyUpdate, Txn),
-               %% add to the prescriber's prescriptions
-               antidote_lib:put(PrescriberKey, ?MAP, update, PrescriberUpdate, Txn),
                ok
            end,
   ok = antidote_lib:txn_commit(Txn),
@@ -522,27 +511,14 @@ process_prescription(Id, Date) ->
                  ?PRESCRIPTION_PROCESSED ->
                    {error, prescription_already_processed};
                  ?PRESCRIPTION_NOT_PROCESSED ->
-                   UpdateOperation = prescription:process(Date),
-                   PatientId = prescription:patient_id(Prescription),
                    PharmacyId = prescription:pharmacy_id(Prescription),
-                   PrescriberId = prescription:prescriber_id(Prescription),
-                   %% gather required antidote keys
-                   PrescriptionKey = binary_prescription_key(Id),
-                   PatientKey = binary_patient_key(PatientId),
                    PharmacyKey = binary_pharmacy_key(PharmacyId),
-                   PrescriberKey = binary_staff_key(PrescriberId),
-                   %% build nested updates for patients, pharmacies, facilities and the prescriber
-                   PatientUpdate = patient:process_prescription(Id, Date),
-                   PharmacyUpdate = pharmacy:process_prescription(Id, Date),
-                   PrescriberUpdate = staff:process_prescription(Id, Date),
-                   %% update top level prescription
-                   antidote_lib:put(PrescriptionKey, ?MAP, update, UpdateOperation, Txn),
-                   %% add to patient prescriptions
-                   antidote_lib:put(PatientKey, ?MAP, update, PatientUpdate, Txn),
-                   %% add to pharmacy prescriptions
-                   antidote_lib:put(PharmacyKey, ?MAP, update, PharmacyUpdate, Txn),
-                   %% add to the prescriber's prescriptions
-                   antidote_lib:put(PrescriberKey, ?MAP, update, PrescriberUpdate, Txn),
+                   PrescriptionKey = binary_prescription_key(Id),
+
+                   antidote_lib:txn_update_objects(
+                     [prescription:process(PrescriptionKey, Date)]
+                     ++ pharmacy:process_prescription(PharmacyKey, PrescriptionKey)
+                     , Txn),
                    ok
                end
            end,
@@ -631,8 +607,8 @@ process_get_request(Key, Type, Txn) ->
     _SomethingElse -> _SomethingElse
   end.
 
-filter_processed_prescriptions(PharmacyPrescriptions) ->
-  [Prescription || {_PrescriptionHeader, Prescription} <- PharmacyPrescriptions, prescription:is_processed(Prescription) == ?PRESCRIPTION_PROCESSED].
+%%filter_processed_prescriptions(PharmacyPrescriptions) ->
+%%  [Prescription || {_PrescriptionHeader, Prescription} <- PharmacyPrescriptions, prescription:is_processed(Prescription) == ?PRESCRIPTION_PROCESSED].
 
 
 check_refs(Checks, Txn) ->

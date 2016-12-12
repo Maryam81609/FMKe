@@ -12,7 +12,7 @@
   pharmacy_id/1,
   prescriber_id/1,
   drugs/1,
-  process/1,
+  process/2,
   is_processed/1,
   date_prescribed/1,
   date_processed/1,
@@ -90,23 +90,23 @@ drugs(Prescription) ->
   antidote_lib:find_key(Prescription, ?PRESCRIPTION_DRUGS, ?PRESCRIPTION_DRUGS_CRDT).
 
 %% Returns the prescription state (if it is processed) from an already existant prescription object.
--spec is_processed(crdt()) -> string().
+-spec is_processed(crdt()) -> binary().
 is_processed(Prescription) ->
   IsProcessed = antidote_lib:find_key(Prescription, ?PRESCRIPTION_IS_PROCESSED, ?PRESCRIPTION_IS_PROCESSED_CRDT),
   case IsProcessed of
     not_found ->
-      "not_found";
-    Result ->
-      binary_to_list(Result)
+      <<"not_found">>;
+    Result when is_binary(Result) ->
+      Result
   end.
 
 %% Returns a list of antidote operations to modify a prescription in order to fill in the processing
 %% date and update the prescription date.
--spec process(string()) -> [term()].
-process(CurrentDate) ->
+-spec process(binary(), string()) -> antidote_lib:update().
+process(PrescriptionKey, CurrentDate) ->
   IsProcessedOp = build_lwwreg_op(?PRESCRIPTION_IS_PROCESSED, ?PRESCRIPTION_IS_PROCESSED_CRDT, ?PRESCRIPTION_PROCESSED),
   ProcessedOp = build_lwwreg_op(?PRESCRIPTION_DATE_PROCESSED, ?PRESCRIPTION_DATE_PROCESSED_CRDT, CurrentDate),
-  [IsProcessedOp, ProcessedOp].
+  {antidote_lib:create_bucket(PrescriptionKey, antidote_crdt_gmap), update, [IsProcessedOp, ProcessedOp]}.
 
 %% Returns a list of antidote operations to modify a prescription in order to add drugs to a prescription.
 -spec add_drugs([term()]) -> [term()].

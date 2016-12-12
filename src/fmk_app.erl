@@ -31,10 +31,12 @@ start(_StartType, _StartArgs) ->
         {"/patients/[:id]", patient_handler, []},
         {"/pharmacies/[:id]", pharmacy_handler, []},
         {"/pharmacies/[:id]/prescriptions", pharmacy_handler, prescriptions},
+        {"/pharmacies/[:id]/processed_prescriptions", pharmacy_handler, processed_prescriptions},
         {"/facilities/[:id]", facility_handler, []},
         {"/treatments/[:id]", treatment_handler, []},
         {"/events/[:id]", event_handler, []},
-        {"/staff/[:id]", staff_handler, []}
+        {"/staff/[:id]", staff_handler, []},
+        {"/staff/[:id]/prescriptions", staff_handler, prescriptions}
       ]}
     ]),
     HttpPort = list_to_integer(fmk_config:get(http_port,9090)),

@@ -14,7 +14,7 @@
   add_prescription/2,
   process_prescription/2,
   add_prescription_drugs/2
-  , prescriptions_key/1]).
+  , prescriptions_key/1, prescriptions_processed_key/1]).
 
 %% Returns a list of operations ready to be inserted into antidote.
 %% All Ids must be of type pos_integer() and name and address should be binary()
@@ -61,16 +61,16 @@ add_prescription(PharmacyId, PrescriptionKey) ->
 prescriptions_key(PharmacyId) ->
   antidote_lib:create_bucket(<<PharmacyId/binary, "_prescriptions">>, antidote_crdt_orset).
 
+prescriptions_processed_key(PharmacyId) ->
+  antidote_lib:create_bucket(<<PharmacyId/binary, "_prescriptions_processed">>, antidote_crdt_orset).
 
 
-    - spec process_prescription(id(), string()) -> [term()].
-process_prescription(PrescriptionId, CurrentDate) ->
-  PrescriptionUpdate = prescription:process(CurrentDate),
-  %% now to insert the nested operations inside the prescriptions map
-  PharmacyPrescriptionsKey = fmk_core:binary_prescription_key(PrescriptionId),
-  %% return a top level patient update that contains the prescriptions map update
-  PharmacyPrescriptionsOp = antidote_lib:build_nested_map_op(?PHARMACY_PRESCRIPTIONS, ?NESTED_MAP, PharmacyPrescriptionsKey, PrescriptionUpdate),
-  [PharmacyPrescriptionsOp].
+-spec process_prescription(binary(), binary()) -> [antidote_lib:update()].
+process_prescription(PharmacyKey, PrescriptionKey) ->
+  [
+    {prescriptions_key(PharmacyKey), remove, PrescriptionKey},
+    {prescriptions_processed_key(PharmacyKey), add, PrescriptionKey}
+  ].
 
 -spec add_prescription_drugs(id(), [string()]) -> [term()].
 add_prescription_drugs(PrescriptionId, Drugs) ->
