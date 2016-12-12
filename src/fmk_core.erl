@@ -32,7 +32,7 @@
   update_facility_details/4,
   update_staff_details/4,
   update_prescription_medication/3
-]).
+  , create_prescription/7]).
 
 %% Exports needed for other modules
 -export([
@@ -337,6 +337,10 @@ update_prescription_medication(Id, add_drugs, Drugs) ->
   Result;
 update_prescription_medication(_Id, _action, _Drugs) -> {error, undefined}.
 
+
+create_prescription(PrescriptionId, PatientId, PrescriberId, PharmacyId, TreatmentId, DatePrescribed, Drugs) ->
+  create_prescription(PrescriptionId, PatientId, PrescriberId, PharmacyId, TreatmentId, none, DatePrescribed, Drugs).
+
 %% Creates a prescription that is associated with a pacient, prescriber (medicall staff),
 %% pharmacy and treatment facility (hospital). The prescription also includes the prescription date
 %% and the list of drugs that should be administered.
@@ -569,11 +573,11 @@ concatenate_id(event, Id) ->
 concatenate_list_with_id(List, Id) ->
   lists:flatten(io_lib:format(List, [Id])).
 
-check_prescription_id(Id, Txn) ->
-  case get_prescription_by_id(Id, Txn) of
-    {error, not_found} -> free;
-    _Map -> taken
-  end.
+%%check_prescription_id(Id, Txn) ->
+%%  case get_prescription_by_id(Id, Txn) of
+%%    {error, not_found} -> free;
+%%    _Map -> taken
+%%  end.
 
 check_staff_id(Id, Txn) ->
   case get_staff_by_id(Id, Txn) of
@@ -587,11 +591,11 @@ check_patient_id(Id, Txn) ->
     _Map -> taken
   end.
 
-check_pharmacy_id(Id, Txn) ->
-  case get_pharmacy_by_id(Id, Txn) of
-    {error, not_found} -> free;
-    _Map -> taken
-  end.
+%%check_pharmacy_id(Id, Txn) ->
+%%  case get_pharmacy_by_id(Id, Txn) of
+%%    {error, not_found} -> free;
+%%    _Map -> taken
+%%  end.
 
 check_facility_id(Id, Txn) ->
   case get_facility_by_id(Id, Txn) of
