@@ -7,7 +7,7 @@ services:
 install:
   - make all
 script:
-  - sed -i 's/{duration,.*}/{duration, 1}/g' test/fmkclient.config
+  - sed -i 's/{duration,.*}/{duration, 1}/g' benchmark/fmkclient.config
   - ./runBenchLocal.sh docker
 sudo: required
 dist: trusty
