@@ -348,8 +348,12 @@ get_random_date() ->
 fmk_request(HttpConn, Req, State) ->
     fmk_request(HttpConn, Req, State, fun simple_response_handler/2).
 
-fmk_request(HttpConn, Req, State, Handler) ->
-    case hackney:send_request(HttpConn,Req) of
+
+
+fmk_request(_HttpConn, Req, State, Handler) ->
+    {Method, URL, Headers, Payload} = Req,
+    Options = [],
+    case hackney:request(Method, URL,Headers, Payload, Options) of
         {ok, 200, _RespHeaders, HttpConn} ->
             {ok, Body} = hackney:body(HttpConn),
             Json = decode_json(Body),
@@ -358,8 +362,22 @@ fmk_request(HttpConn, Req, State, Handler) ->
             {ok, Body} = hackney:body(HttpConn),
             {error, {request_failed, Status, split_lines(binary_to_list(Body))}, State};
         {error, Reason} ->
-            {error, Reason, State}
+            {error, {send_request_failed, Reason, Req}, State}
     end.
+
+
+%%fmk_request(HttpConn, Req, State, Handler) ->
+%%    case hackney:send_request(HttpConn,Req) of
+%%        {ok, 200, _RespHeaders, Ref} ->
+%%            {ok, Body} = hackney:body(Ref),
+%%            Json = decode_json(Body),
+%%            Handler(Json, State);
+%%        {ok, Status, _RespHeaders, Ref} ->
+%%            {ok, Body} = hackney:body(Ref),
+%%            {error, {request_failed, Status, split_lines(binary_to_list(Body))}, State};
+%%        {error, Reason} ->
+%%            {error, {send_request_failed, Reason, Req}, State}
+%%    end.
 
 split_lines([]) -> [];
 split_lines(S) ->

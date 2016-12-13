@@ -32,7 +32,7 @@
   update_facility_details/4,
   update_staff_details/4,
   update_prescription_medication/3
-  , create_prescription/7]).
+  , create_prescription/7, error_to_binary/1]).
 
 %% Exports needed for other modules
 -export([
@@ -630,3 +630,7 @@ check_refs(Checks, Txn) ->
   catch
     error:Reason -> {error, Reason}
   end.
+
+
+error_to_binary(Reason) ->
+  list_to_binary(lists:flatten(io_lib:format("~p", [Reason]))).

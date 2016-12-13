@@ -57,7 +57,7 @@ create_prescription(Req) ->
       Result =
         case ServerResponse of
           ok -> ServerResponse;
-          {error, Reason} -> Reason
+          {error, Reason} -> fmk_core:error_to_binary(Reason)
         end,
       JsonReply = jsx:encode([{success, Success}, {result, Result}]),
       cowboy_req:reply(200, #{
@@ -93,7 +93,7 @@ update_prescription(Req) ->
             ServerResponse = fmk_core:process_prescription(IntegerId, DateProcessed),
             Success = ServerResponse =:= ok,
             Result = case ServerResponse of
-                       {error, Reason} -> Reason;
+                       {error, Reason} -> fmk_core:error_to_binary(Reason);
                        ok -> ServerResponse
                      end,
             jsx:encode([{success, Success}, {result, Result}])
