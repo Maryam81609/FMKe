@@ -10,7 +10,7 @@
 
 %% These exports supply managed transactions, to make it easier to work with Antidote. Use these
 %% if you don't need fine grained control over transactions.
--export ([
+-export([
   create_bucket/2,
   get/2,
   get/3,
@@ -18,7 +18,7 @@
   put/5,
   put_map/5,
   put_map/6
-  ]).
+  , find_int_key/3]).
 
 %% This export is internally used by the put and get functions. These functions are exported in order
 %% to provide finer-grained transactional support.
@@ -145,6 +145,12 @@ find_key(Map, Key, KeyType) ->
   case lists:keyfind({Key,KeyType},1,Map) of
     false -> not_found;
     {{Key,KeyType},Value} -> Value
+  end.
+
+find_int_key(Map, Key, KeyType) ->
+  case lists:keyfind({Key,KeyType},1,Map) of
+    false -> not_found;
+    {{Key,KeyType},Value} -> binary_to_integer(Value)
   end.
 
 %% ------------------------------------------------------------------------------------------------

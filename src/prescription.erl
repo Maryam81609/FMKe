@@ -46,27 +46,27 @@ key(Id) ->
 %% Returns the facility ID from an already existant prescription object.
 -spec facility_id(crdt()) -> id().
 facility_id(Prescription) ->
-  antidote_lib:find_key(Prescription, ?PRESCRIPTION_FACILITY_ID, ?PRESCRIPTION_FACILITY_ID_CRDT).
+  antidote_lib:find_int_key(Prescription, ?PRESCRIPTION_FACILITY_ID, ?PRESCRIPTION_FACILITY_ID_CRDT).
 
 %% Returns the pharmacy ID from an already existant prescription object.
 -spec pharmacy_id(crdt()) -> id().
 pharmacy_id(Prescription) ->
-  antidote_lib:find_key(Prescription, ?PRESCRIPTION_PHARMACY_ID, ?PRESCRIPTION_PHARMACY_ID_CRDT).
+  antidote_lib:find_int_key(Prescription, ?PRESCRIPTION_PHARMACY_ID, ?PRESCRIPTION_PHARMACY_ID_CRDT).
 
 %% Returns the prescriber ID from an already existant prescription object.
 -spec prescriber_id(crdt()) -> id().
 prescriber_id(Prescription) ->
-  antidote_lib:find_key(Prescription, ?PRESCRIPTION_PRESCRIBER_ID, ?PRESCRIPTION_PRESCRIBER_ID_CRDT).
+  antidote_lib:find_int_key(Prescription, ?PRESCRIPTION_PRESCRIBER_ID, ?PRESCRIPTION_PRESCRIBER_ID_CRDT).
 
 %% Returns the prescription ID from an already existant prescription object.
--spec id(crdt()) -> id().
+-spec id(crdt()) -> binary().
 id(Prescription) ->
   antidote_lib:find_key(Prescription, ?PRESCRIPTION_ID, ?PRESCRIPTION_ID_CRDT).
 
 %% Returns the patient ID from an already existant prescription object.
 -spec patient_id(crdt()) -> id().
 patient_id(Prescription) ->
-  antidote_lib:find_key(Prescription, ?PRESCRIPTION_PATIENT_ID, ?PRESCRIPTION_PATIENT_ID_CRDT).
+  antidote_lib:find_int_key(Prescription, ?PRESCRIPTION_PATIENT_ID, ?PRESCRIPTION_PATIENT_ID_CRDT).
 
 %% Returns the prescription date from an already existant prescription object.
 -spec date_prescribed(crdt()) -> string().

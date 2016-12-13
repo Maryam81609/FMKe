@@ -87,15 +87,21 @@ update_prescription(Req) ->
                 DrugsList = parse_line(CsvDrugs),
                 ServerResponse = fmk_core:update_prescription_medication(IntegerId, add_drugs, DrugsList),
                 Success = ServerResponse =:= ok,
-                jsx:encode([{success, Success}, {result, ServerResponse}])
+                Result =
+                  case ServerResponse of
+                    {error, Reason} -> fmk_core:error_to_binary(Reason);
+                    ok -> ServerResponse
+                  end,
+                jsx:encode([{success, Success}, {result, Result}])
             end;
           _Date ->
             ServerResponse = fmk_core:process_prescription(IntegerId, DateProcessed),
             Success = ServerResponse =:= ok,
-            Result = case ServerResponse of
-                       {error, Reason} -> fmk_core:error_to_binary(Reason);
-                       ok -> ServerResponse
-                     end,
+            Result =
+              case ServerResponse of
+                {error, Reason} -> fmk_core:error_to_binary(Reason);
+                ok -> ServerResponse
+              end,
             jsx:encode([{success, Success}, {result, Result}])
         end,
       cowboy_req:reply(200, #{
@@ -117,7 +123,7 @@ get_prescription(Req) ->
           true ->
             jsx:encode([{success, Success}, {result, crdt_json_encoder:encode_object(prescription, ServerResponse)}]);
           false ->
-            jsx:encode([{success, Success}, {result, ServerResponse}])
+            jsx:encode([{success, Success}, {result, fmk_core:error_to_binary(ServerResponse)}])
         end,
       cowboy_req:reply(200, #{
         <<"content-type">> => <<"application/json">>
