@@ -9,7 +9,7 @@ compile:
 	${REBAR} compile
 	cd ${BENCH}; make all; cd -
 	cp ${BENCH}/include/basho_bench.hrl ./include/
-	erlc benchmark/${CLIENT}.erl
+	erlc test/${CLIENT}.erl
 	mv ${CLIENT}.beam ${EBIN}/
 
 rel:
@@ -20,10 +20,10 @@ relclean:
 	rm -rf _build/default/rel
 
 populate: compile
-	./benchmark/fmk_setup_script.erl 1 fmk@127.0.0.1
+	./test/fmk_setup_script.erl 1 fmk@127.0.0.1
 
 bench: compile
-	${BENCH}/_build/default/bin/basho_bench benchmark/fmkclient.config
+	${BENCH}/_build/default/bin/basho_bench test/fmkclient.config
 	-Rscript --vanilla ${BENCH}/priv/summary.r -i tests/current
 
 console: rel
