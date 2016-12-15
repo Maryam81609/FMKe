@@ -341,12 +341,13 @@ create_prescription(PrescriptionId, PatientId, PrescriberId, PharmacyId, Facilit
   PatientKey = binary_patient_key(PatientId),
   PharmacyKey = binary_pharmacy_key(PharmacyId),
   PrescriberKey = binary_staff_key(PrescriberId),
+  FacilityKey = binary_facility_key(FacilityId),
   ChecksOk = check_refs([
     {free, PrescriptionKey},
     {taken, PatientKey},
     {taken, PrescriberKey},
     {taken, PharmacyKey},
-    {taken, PrescriberKey}
+    {taken, FacilityKey}
   ], Txn),
   Result =
     case ChecksOk of
